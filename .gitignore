@@ -1,0 +1,21 @@
+# this repo may appear when updating our copy of s223
+223standard
+
+# cache of ontologies
+.ontoenv
+
+# built ontology
+water.ttl
+
+# ignore uv.lock
+uv.lock
+
+# Having xcode issues with new computer, need to fix before using uv
+# - using venv while figuring out
+venv
+__pycache__/
+.DS_Store
+# ignore logs?
+*.log
+.env
+vector_db
