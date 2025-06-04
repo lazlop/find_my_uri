@@ -57,7 +57,7 @@ def main():
             elif user_input.lower() == 'help':
                 print("\nCommands:")
                 print("  help                   - Show this help message")
-                print("  build                   - Load the DB, not overwriting (may take a while)")
+                print("  build                  - Load the DB, not overwriting (may take a while)")
                 print("  quit/exit/q            - Exit the utility")
                 print("  <search_term>          - Search for URIs similar to the term")
                 print("  <search_term> -n <num> - Limit results to <num> items (default: 3)")
