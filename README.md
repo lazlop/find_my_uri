@@ -1,6 +1,10 @@
 # Find My URI
 
+I keep forgetting exactly what the exact name of things are... 
+
 A SPARQL-based URI finder that uses vector database technology for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
+
+Doing paths using '/' so will need modification for working on windows
 
 ## Overview
 
@@ -16,6 +20,8 @@ Find My URI loads class definitions from TTL (Turtle) ontology files, extracts c
 - **Persistent storage**: Uses ChromaDB for efficient vector storage and retrieval
 
 ## Supported Ontologies
+
+This can be adjusted in the future - but is intended as a tool for a coupe projects I am working on 
 
 - **S223**: ASHRAE Standard 223 (Building automation systems)
 - **WATR**: Water ontology 
@@ -90,24 +96,6 @@ for result in results:
     print(f"Similarity: {result['similarity_score']:.3f}")
 ```
 
-### Building the Vector Database
-
-To build the vector database from TTL files:
-
-```python
-from find_my_uri import URIEncoder
-
-# Initialize encoder
-encoder = URIEncoder(
-    ttl_directories=["../water_ontology/water/", "../water_ontology/s223"],
-    vector_db_path="./vector_db"
-)
-
-# Load TTL files and build database
-files_loaded = encoder.load_ttl_files()
-items_added = encoder.build_vector_database()
-```
-
 ## Project Structure
 
 ```
@@ -131,13 +119,13 @@ Key dependencies include:
 
 ## Configuration
 
+Provide file paths for loading ontologies using the .env file. 
+
 The default configuration in `uricli.py` expects TTL files in:
 - `../water_ontology/water/`
 - `../water_ontology/s223`
 
 Vector database is stored in `./vector_db/`
-
-You can modify these paths in `uricli.py` or when initializing the classes programmatically.
 
 ## How It Works
 

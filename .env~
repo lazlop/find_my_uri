@@ -1,0 +1,2 @@
+TTL_DIRECTORIES=../water_ontology/water/,../water_ontology/s223
+VECTOR_DB_PATH=vector_db

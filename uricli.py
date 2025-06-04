@@ -1,7 +1,11 @@
 from find_my_uri import *
+from dotenv import load_dotenv
+import os
 
-TTL_DIRECTORIES = ["../water_ontology/water/", "../water_ontology/s223"]
-VECTOR_DB_PATH = "./vector_db"
+load_dotenv()
+
+TTL_DIRECTORIES = os.getenv("TTL_DIRECTORIES").split(",")
+VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH")
 
             
 def build_vector_database(ttl_directories=TTL_DIRECTORIES, vector_db_path=VECTOR_DB_PATH, embedding_model: str = "all-MiniLM-L6-v2"):
