@@ -1,6 +1,6 @@
 # Find My URI
 
-I keep forgetting exactly what the exact name of things are... 
+Some tools/SPARQL require you to know the names of different ontology classes/URIs. This helps you find those URIs.
 
 A SPARQL-based URI finder that uses vector database technology for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
 
