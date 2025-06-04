@@ -1,6 +1,6 @@
 # Find My URI
 
-A SPARQL-based URI finder that uses vector database technology for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
+A SPARQL-based URI finder that uses vector db for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
 
 ## Overview
 
