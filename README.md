@@ -29,7 +29,7 @@ This can be adjusted in the future - but is intended as a tool for a coupe proje
 
 ## Installation
 
-0. You don't even have to clone the repository! You can just run:
+1. You don't even have to clone the repository! You can just run:
 ```bash
 uvx --from 'find_my_uri @ git+https://github.com/lazlop/find_my_uri.git' find-my-uri
 ```
