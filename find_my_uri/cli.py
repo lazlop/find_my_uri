@@ -2,6 +2,7 @@ from .core import URIFinder
 import importlib.resources
 
 DEFAULT_VECTOR_DB_PATH = str(importlib.resources.path('find_my_uri', 'vector_db'))
+DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2" # or 'all-MiniLM-L6-v2'
 
 def main():
     """Interactive command line utility for searching URIs."""
@@ -9,7 +10,7 @@ def main():
     print("This utility searches for URIs in the ontology using semantic similarity.")
     print("Type 'help' for commands or 'quit' to exit.\n")
 
-    finder = URIFinder(vector_db_path=DEFAULT_VECTOR_DB_PATH)
+    finder = URIFinder(vector_db_path=DEFAULT_VECTOR_DB_PATH, embedding_model=DEFAULT_EMBEDDING_MODEL)
     print("✓ Vector database loaded successfully")
     
     # Interactive search loop

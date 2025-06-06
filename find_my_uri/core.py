@@ -51,7 +51,7 @@ class URIEncoder:
     def __init__(self, 
                  ttl_directories: List[str],
                  vector_db_path: Optional[str],
-                 embedding_model: str = "all-MiniLM-L6-v2"):
+                 embedding_model: str):
         """
         Initialize the URI finder.
         
@@ -86,7 +86,7 @@ class URIEncoder:
         """Initialize ChromaDB client and collection."""
         try:
             if not self.vector_db_path:
-                self.client = chromadb.Client()
+                self.client = chromadb.PersistentClient()
             else:
                 self.client = chromadb.PersistentClient(path=self.vector_db_path)
             self.collection = self.client.get_or_create_collection(
@@ -323,7 +323,7 @@ class URIEncoder:
     
 class URIFinder:
     def __init__(self, vector_db_path: str, 
-                 embedding_model: str = "all-MiniLM-L6-v2"):
+                 embedding_model: str):
         self.vector_db_path = vector_db_path
         self.client = None
         self.collection = None
