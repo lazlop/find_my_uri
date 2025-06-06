@@ -33,6 +33,7 @@ This can be adjusted in the future - but is intended as a tool for a coupe proje
 ```bash
 uvx --from 'find_my_uri @ git+https://github.com/lazlop/find_my_uri.git' find-my-uri
 ```
+Be aware, it will take a little while to download the package (which includes the embedded URIs) and the embedding model
 
 2. Clone the repository:
 ```bash
@@ -72,14 +73,66 @@ The CLI provides several commands:
 
 ```bash
 # Basic search
-> temperature
+> terminal unit 
+
+Searching for: 'terminal unit'
+Showing top 3 results:
+--------------------------------------------------
+ 1. TerminalUnit
+    URI: http://data.ashrae.org/standard223#TerminalUnit
+    Namespace: S223
+    label: Terminal Unit
+    Similarity: 0.824
+
+ 2. FanPoweredTerminal
+    URI: http://data.ashrae.org/standard223#FanPoweredTerminal
+    Namespace: S223
+    label: Fan Powered Air Terminal
+    Similarity: 0.427
+
+ 3. SingleDuctTerminal
+    URI: http://data.ashrae.org/standard223#SingleDuctTerminal
+    Namespace: S223
+    label: Single Duct Terminal.
+    Similarity: 0.425
 
 # Limit results
-> flow rate -n 10
+> flow rate -n 1
+
+Searching for: 'flow rate'
+Showing top 1 results:
+--------------------------------------------------
+ 1. MassFlowRate
+    URI: http://qudt.org/vocab/quantitykind/MassFlowRate
+    Namespace: QK
+    label: Mass Flow Rate
+    Similarity: 0.774
 
 # Filter by namespace
-> pump -ns S223
-> meter -ns UNIT
+> fahrenheit -ns UNIT
+
+Searching for: 'fahrenheit'
+Filtering by namespace: UNIT
+Showing top 3 results:
+--------------------------------------------------
+ 1. DEG_F
+    URI: http://qudt.org/vocab/unit/DEG_F
+    Namespace: UNIT
+    label: Degree Fahrenheit
+    Similarity: 0.691
+
+ 2. IN-PER-DEG_F
+    URI: http://qudt.org/vocab/unit/IN-PER-DEG_F
+    Namespace: UNIT
+    label: Inch per Degree Fahrenheit
+    Similarity: 0.660
+
+ 3. LB-DEG_F
+    URI: http://qudt.org/vocab/unit/LB-DEG_F
+    Namespace: UNIT
+    label: Pound Degree Fahrenheit
+    Similarity: 0.622
+
 ```
 
 ### Programmatic Usage
