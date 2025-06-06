@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include .env
+recursive-include find_my_uri *.py
+recursive-include find_my_uri/vector_db *
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store

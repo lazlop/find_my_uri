@@ -18,4 +18,3 @@ __pycache__/
 # ignore logs?
 *.log
 .env
-vector_db

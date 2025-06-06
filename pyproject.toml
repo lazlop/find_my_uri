@@ -1,23 +1,52 @@
 [project]
-name = "find_my_uri"
+name = "find-my-uri"
 version = "0.1.0"
-description = "Add your description here"
+description = "A SPARQL-based URI finder using vector database for semantic similarity matching of ontology classes"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "lazlop", email = "your-email@example.com"}
+]
+maintainers = [
+    {name = "lazlop", email = "your-email@example.com"}
+]
+keywords = ["ontology", "sparql", "uri", "semantic-search", "vector-database", "rdf"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+]
 dependencies = [
-    "pyontoenv==0.1.10a4",
     "rdflib>=7.0.0",
-    "buildingmotif[topquadrant]",
-    "jupyterlab>=4.2.5",
-    "jupyterlab-rise>=0.42.0",
-    "ipykernel>=6.29.5",
-    "jupyter-book>=1.0.3",
-    "sphinx-autodoc-bmotif==0.1.6",
-    "sphinx-toolbox>=3.8.1",
-    "sphinx-tabs>=3.4.5",
     "chromadb>=1.0.12",
     "sentence-transformers>=4.1.0",
 ]
+dev = [
+    "ipykernel>=6.29.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/lazlop/find-my-uri"
+Repository = "https://github.com/lazlop/find-my-uri"
+Documentation = "https://github.com/lazlop/find-my-uri#readme"
+"Bug Tracker" = "https://github.com/lazlop/find-my-uri/issues"
+
+[project.scripts]
+find-my-uri = "find_my_uri.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.uv.sources]
 buildingmotif = { git = "https://github.com/NREL/buildingmotif.git", rev = "develop" }
