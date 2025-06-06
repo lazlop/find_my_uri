@@ -20,3 +20,4 @@ __pycache__/
 .env
 dist
 publish_to_pypi.md
+*_temp*
