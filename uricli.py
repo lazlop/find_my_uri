@@ -6,10 +6,12 @@ load_dotenv()
 
 TTL_DIRECTORIES = os.getenv("TTL_DIRECTORIES").split(",")
 VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH")
+# other default can be all-MiniLM-L6-v2
+DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2"
 
             
-def build_vector_database(ttl_directories=TTL_DIRECTORIES, vector_db_path=VECTOR_DB_PATH, embedding_model: str = "all-MiniLM-L6-v2"):
-    encoder = URIEncoder(ttl_directories=ttl_directories, vector_db_path=vector_db_path)
+def build_vector_database(ttl_directories=TTL_DIRECTORIES, vector_db_path=VECTOR_DB_PATH, embedding_model: str = DEFAULT_EMBEDDING_MODEL):
+    encoder = URIEncoder(ttl_directories=ttl_directories, vector_db_path=vector_db_path, embedding_model=embedding_model)
     files_loaded = encoder.load_ttl_files()
     print(f"Loaded {files_loaded} TTL files")
     items_added = encoder.build_vector_database()
@@ -24,7 +26,7 @@ def main():
 
     if os.path.exists(VECTOR_DB_PATH):
         print("✓ Vector database found")
-        finder = URIFinder(vector_db_path=VECTOR_DB_PATH)
+        finder = URIFinder(vector_db_path=VECTOR_DB_PATH, embedding_model=DEFAULT_EMBEDDING_MODEL)
         print("✓ Vector database loaded successfully")
     else:
         print(f"✗ vector database does not exist at expected path")
@@ -32,7 +34,7 @@ def main():
         user_input = input("\n> ").strip()
         if user_input.lower() != 'n':
             build_vector_database()
-            finder = URIFinder(vector_db_path=VECTOR_DB_PATH)
+            finder = URIFinder(vector_db_path=VECTOR_DB_PATH, embedding_model=DEFAULT_EMBEDDING_MODEL)
     
     # Interactive search loop
     while True:
@@ -50,8 +52,8 @@ def main():
                 
             elif user_input.lower() == 'build':
                 print("Building vector database...")
-                build_vector_database()
-                finder = URIFinder(vector_db_path=VECTOR_DB_PATH)
+                build_vector_database(vector_db_path=VECTOR_DB_PATH, embedding_model=DEFAULT_EMBEDDING_MODEL)
+                finder = URIFinder(vector_db_path=VECTOR_DB_PATH, embedding_model=DEFAULT_EMBEDDING_MODEL)
                 print("✓ Vector database loaded successfully")
                 continue
             elif user_input.lower() == 'help':

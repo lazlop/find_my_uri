@@ -52,7 +52,7 @@ class URIEncoder:
     def __init__(self, 
                  ttl_directories: List[str],
                  vector_db_path: Optional[str],
-                 embedding_model: str = "all-MiniLM-L6-v2"):
+                 embedding_model: str):
         """
         Initialize the URI finder.
         
@@ -324,7 +324,7 @@ class URIEncoder:
     
 class URIFinder:
     def __init__(self, vector_db_path: str, 
-                 embedding_model: str = "all-MiniLM-L6-v2"):
+                 embedding_model: str):
         self.vector_db_path = vector_db_path
         self.client = None
         self.collection = None
