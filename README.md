@@ -1,10 +1,8 @@
 # Find My URI
 
-I keep forgetting exactly what the exact name of things are... 
+A SPARQL-based URI finder that uses a vector database for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
 
-A SPARQL-based URI finder that uses vector database technology for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
-
-Doing paths using '/' so will need modification for working on windows
+If you can't remember if the QUDT unit for Fahrenheit is DEG_F, TemperatureFahrenheit, F, or if you can't even spell Fahrenheit correctly - this will help a little bit. 
 
 ## Overview
 
@@ -31,7 +29,12 @@ This can be adjusted in the future - but is intended as a tool for a coupe proje
 
 ## Installation
 
-1. Clone the repository:
+0. You don't even have to clone the repository! You can just run:
+```bash
+uvx --from 'find_my_uri @ git+https://github.com/lazlop/find_my_uri.git' find-my-uri
+```
+
+2. Clone the repository:
 ```bash
 git clone <repository-url>
 cd find_my_uri
@@ -143,3 +146,7 @@ see LICENSE
 ## AI Disclaimer 
 
 Mostly created using various LLMs and Cline
+
+## TODO Items
+
+Constituents and Media have very similar names in 223. I will have to pull in more than the label information to let you distinguish between them. There may be some possible performance improvements. 
