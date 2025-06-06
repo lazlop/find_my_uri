@@ -1,6 +1,6 @@
 # Find My URI
 
-A SPARQL-based URI finder that uses a vector database for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms.
+URI finder that uses a vector database for semantic similarity matching of ontology classes. This tool helps users discover relevant URIs from water and building ontologies by searching with natural language terms. Currently just uses URIs and labels of some ontologies retrieved via SPARQL.
 
 If you can't remember if the QUDT unit for Fahrenheit is DEG_F, TemperatureFahrenheit, F, or if you can't even spell Fahrenheit correctly - this will help a little bit. 
 
