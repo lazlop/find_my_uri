@@ -29,13 +29,15 @@ This can be adjusted in the future - but is intended as a tool for a coupe proje
 
 ## Installation
 
-1. You don't even have to clone the repository! You can just run:
+1. You don't even have to clone or install the repository! You can just run:
 ```bash
 uvx --from 'find_my_uri @ git+https://github.com/lazlop/find_my_uri.git' find-my-uri
 ```
 Be aware, it will take a little while to download the package (which includes the embedded URIs) and the embedding model
 
-2. Clone the repository:
+OR 
+
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd find_my_uri
@@ -49,6 +51,19 @@ uv sync
 # Or using pip
 pip install -e .
 ```
+and run the package
+3. 
+```bash
+. .venv/bin/activate
+python -m find_my_uri
+```
+
+pip install from this repo (similarly done to uvx), or clone then build and install locally, as so:
+```bash
+python -m build
+pip install dist/find_my_uri-0.1.0-py3-none-any.whl
+```
+there's almost too many options...
 
 ## Usage
 
@@ -57,7 +72,7 @@ pip install -e .
 Run the interactive command-line interface:
 
 ```bash
-python uricli.py
+find-my-uri
 ```
 
 The CLI provides several commands:
