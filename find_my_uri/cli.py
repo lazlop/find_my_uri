@@ -1,7 +1,6 @@
 from .core import URIFinder
 import importlib.resources
 
-DEFAULT_VECTOR_DB_PATH = str(importlib.resources.path('find_my_uri', 'vector_db'))
 DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2" # or 'all-MiniLM-L6-v2'
 
 def main():
@@ -10,10 +9,17 @@ def main():
     print("This utility searches for URIs in the ontology using semantic similarity.")
     print("Type 'help' for commands or 'quit' to exit.\n")
 
-    finder = URIFinder(vector_db_path=DEFAULT_VECTOR_DB_PATH, embedding_model=DEFAULT_EMBEDDING_MODEL)
-    print("✓ Vector database loaded successfully")
+    # Use context manager to properly handle the resource path
+    with importlib.resources.path('find_my_uri', 'vector_db') as vector_db_path:
+        finder = URIFinder(vector_db_path=str(vector_db_path), embedding_model=DEFAULT_EMBEDDING_MODEL)
+        print("✓ Vector database loaded successfully")
+        
+        # Move the interactive loop inside the context manager
+        _run_interactive_loop(finder)
+
+def _run_interactive_loop(finder):
+    """Run the interactive search loop."""
     
-    # Interactive search loop
     while True:
         try:
             # Get user input

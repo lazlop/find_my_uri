@@ -85,10 +85,7 @@ class URIEncoder:
     def _initialize_vector_db(self):
         """Initialize ChromaDB client and collection."""
         try:
-            if not self.vector_db_path:
-                self.client = chromadb.PersistentClient()
-            else:
-                self.client = chromadb.PersistentClient(path=self.vector_db_path)
+            self.client = chromadb.PersistentClient(path=self.vector_db_path)
             self.collection = self.client.get_or_create_collection(
                 name="ontology_classes",
                 metadata={"description": "Ontology class names and URIs",
