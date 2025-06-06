@@ -30,11 +30,9 @@ dependencies = [
     "rdflib>=7.0.0",
     "chromadb>=1.0.12",
     "sentence-transformers>=4.1.0",
-]
-dev = [
-    "ipykernel>=6.29.5",
-]
+    "numpy<2"
 
+]
 [project.urls]
 Homepage = "https://github.com/lazlop/find-my-uri"
 Repository = "https://github.com/lazlop/find-my-uri"
@@ -47,6 +45,3 @@ find-my-uri = "find_my_uri.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.uv.sources]
-buildingmotif = { git = "https://github.com/NREL/buildingmotif.git", rev = "develop" }

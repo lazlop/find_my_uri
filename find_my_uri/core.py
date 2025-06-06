@@ -7,7 +7,6 @@ in a vector database for efficient URI lookup and similarity matching.
 
 import os
 import glob
-from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Union
 import logging
 

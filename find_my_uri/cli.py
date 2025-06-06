@@ -1,30 +1,15 @@
 from .core import URIFinder
-import os
-import argparse
-import pkg_resources
+import importlib.resources
 
-# Default to packaged vector database
-DEFAULT_VECTOR_DB_PATH = pkg_resources.resource_filename('find_my_uri', 'vector_db')
+DEFAULT_VECTOR_DB_PATH = str(importlib.resources.path('find_my_uri', 'vector_db'))
 
 def main():
     """Interactive command line utility for searching URIs."""
-    parser = argparse.ArgumentParser(description='Find My URI - Semantic URI search utility')
-    parser.add_argument('--vector-db', default=DEFAULT_VECTOR_DB_PATH, help='Path to vector database')
-    
-    args = parser.parse_args()
-    vector_db_path = args.vector_db
-    
     print("=== URI Search Utility ===")
     print("This utility searches for URIs in the ontology using semantic similarity.")
     print("Type 'help' for commands or 'quit' to exit.\n")
 
-    if not os.path.exists(vector_db_path):
-        print(f"✗ Vector database does not exist at: {vector_db_path}")
-        print("Please ensure the vector database is available or specify a different path with --vector-db")
-        return
-    
-    print("✓ Vector database found")
-    finder = URIFinder(vector_db_path=vector_db_path)
+    finder = URIFinder(vector_db_path=DEFAULT_VECTOR_DB_PATH)
     print("✓ Vector database loaded successfully")
     
     # Interactive search loop
