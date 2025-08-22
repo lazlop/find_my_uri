@@ -30,8 +30,11 @@ dependencies = [
     "rdflib>=7.0.0",
     "chromadb>=1.0.12",
     "sentence-transformers>=4.1.0",
-    "numpy<2"
-
+    "numpy<2",
+    "pyoxigraph>=0.4.11",
+    "oxigraph>=0.4.11",
+    "ipykernel>=6.30.1",
+    "oxrdflib>=0.4.0",
 ]
 [project.urls]
 Homepage = "https://github.com/lazlop/find-my-uri"

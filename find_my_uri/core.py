@@ -1,23 +1,21 @@
+from sentence_transformers import SentenceTransformer
+from pathlib import Path
+import pickle
+import os
+import glob
+from typing import List, Dict, Tuple, Optional, Union
+from rdflib import Graph, Namespace, URIRef, Literal
+from dataclasses import dataclass
+from pprint import pprint
+
+DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2" # or 'all-MiniLM-L6-v2'
+
 """
 SPARQL-based URI finder using vector database for class name matching.
 
 This module loads class names from TTL files using SPARQL queries and stores them
 in a vector database for efficient URI lookup and similarity matching.
 """
-
-import os
-import glob
-from typing import List, Dict, Tuple, Optional, Union
-import logging
-
-# Core dependencies
-from rdflib import Graph, Namespace, URIRef, Literal
-
-import chromadb
-from chromadb.utils import embedding_functions
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Common namespaces
 RDF = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
@@ -43,33 +41,44 @@ NAMESPACE_MAP = {
 ABBREV_TO_NAMESPACE = {v: k for k, v in NAMESPACE_MAP.items()}
 
 
+@dataclass
+class URIEncoderConfig:
+    """Configuration for URIEncoder"""
+    ttl_directories: List[Path]
+    data_dir: Path = Path("data")
+    embedding_model: str = DEFAULT_EMBEDDING_MODEL
+    file_patterns: List[str] = None
+    
+    def __post_init__(self):
+        if self.file_patterns is None:
+            self.file_patterns = ['*.ttl']
+        
+        # Ensure data directory exists
+        self.data_dir.mkdir(exist_ok=True)
+        
+        # Convert string paths to Path objects
+        self.ttl_directories = [Path(d) for d in self.ttl_directories]
+
+
 class URIEncoder:
     """
     A class to find URIs using SPARQL queries and vector similarity matching.
     """
     
-    def __init__(self, 
-                 ttl_directories: List[str],
-                 vector_db_path: Optional[str],
-                 embedding_model: str):
+    def __init__(self, config: URIEncoderConfig):
         """
         Initialize the URI finder.
         
         Args:
-            ttl_directories: List of directories containing TTL files
-            vector_db_path: Path to store the vector database
-            embedding_model: Name of the sentence transformer model to use
+            config: Configuration object containing all necessary parameters
         """
-        self.ttl_directories = ttl_directories
-        self.vector_db_path = vector_db_path
-        self.embedding_model_name = embedding_model
+        self.config = config
         
         # Initialize components
-        self.graph = Graph()
+        self.graph = Graph('Oxigraph')
         self.class_data = []
         self.client = None
         self.collection = None
-        self.embedding_model = embedding_model
         
         # Bind common namespaces
         self.graph.bind("rdf", RDF)
@@ -78,62 +87,35 @@ class URIEncoder:
         self.graph.bind("s223", S223)
         self.graph.bind("watr", WATR)
         
-        # Initialize vector database and embedding model
-        self._initialize_vector_db()
-        self._initialize_embedding_model()
-        
-    def _initialize_vector_db(self):
-        """Initialize ChromaDB client and collection."""
-        try:
-            self.client = chromadb.PersistentClient(path=self.vector_db_path)
-            self.collection = self.client.get_or_create_collection(
-                name="ontology_classes",
-                metadata={"description": "Ontology class names and URIs",
-                          "hnsw:space": "cosine"} 
-                # Don't have to use cosine, could use default. They have slightly different performance
-            )
-            logger.info(f"Vector database initialized at {self.vector_db_path}")
-        except Exception as e:
-            logger.error(f"Failed to initialize vector database: {e}")
-            
-    def _initialize_embedding_model(self):
-        """Initialize the sentence transformer model."""
-        self.embedding_model = embedding_functions.SentenceTransformerEmbeddingFunction(
-            self.embedding_model_name
-        )
+        self.embedding_model = SentenceTransformer(self.config.embedding_model)
     
-    def load_ttl_files(self, file_patterns: List[str] = None) -> int:
+    def load_ttl_files(self) -> int:
         """
         Load TTL files from specified directories.
-        
-        Args:
-            file_patterns: List of file patterns to match (e.g., ['*.ttl', '*.owl'])
             
         Returns:
             Number of files loaded
         """
-        file_patterns = ['*.ttl']
-            
         files_loaded = 0
         
-        for directory in self.ttl_directories:
-            if not os.path.exists(directory):
-                logger.warning(f"Directory {directory} does not exist, skipping")
+        for directory in self.config.ttl_directories:
+            if not directory.exists():
+                print(f"Directory {directory} does not exist, skipping")
                 continue
                 
-            for pattern in file_patterns:
-                file_path = os.path.join(directory, "**", pattern)
-                files = glob.glob(file_path, recursive=True)
+            for pattern in self.config.file_patterns:
+                # Use pathlib's glob for recursive search
+                files = list(directory.rglob(pattern))
                 
-                for file in files:
+                for file_path in files:
                     try:
-                        logger.info(f"Loading {file}")
-                        self.graph.parse(file, format="turtle")
+                        print(f"Loading {file_path}")
+                        self.graph.parse(str(file_path), format="turtle")
                         files_loaded += 1
                     except Exception as e:
-                        logger.error(f"Failed to load {file}: {e}")
+                        print(f"Failed to load {file_path}: {e}")
                         
-        logger.info(f"Loaded {files_loaded} TTL files into graph")
+        print(f"Loaded {files_loaded} TTL files into graph")
         return files_loaded
     
     def extract_classes_with_sparql(self) -> List[Dict]:
@@ -148,8 +130,6 @@ class URIEncoder:
         SELECT DISTINCT 
         ?klass 
         ?label 
-        # ?comment 
-        # ?type 
         WHERE {
             { ?klass a s223:Class ;
                 rdfs:label ?label } 
@@ -179,26 +159,21 @@ class URIEncoder:
             for row in results:
                 class_uri = str(row.klass)
                 label = str(row.label) if row.label else self._extract_local_name(class_uri)
-                # comment = str(row.comment) if row.comment else ""
-                # class_type = str(row.type) if row.type else "unknown"
                 
                 class_info = {
                     'uri': class_uri,
                     'label': label,
-                    # 'comment': comment,
-                    # 'type': class_type,
                     'local_name': self._extract_local_name(class_uri),
                     'namespace': self._extract_namespace(class_uri)
                 }
                 classes.append(class_info)
                 
-            logger.info(f"Extracted {len(classes)} classes from ontology")
+            print(f"Extracted {len(classes)} classes from ontology")
             
         except Exception as e:
-            logger.error(f"SPARQL query failed: {e}")
+            print(f"SPARQL query failed: {e}")
             
         return classes
-    
     
     def _extract_local_name(self, uri: str) -> str:
         """Extract the local name from a URI."""
@@ -221,128 +196,95 @@ class URIEncoder:
         """Get namespace abbreviation from full namespace URI."""
         return NAMESPACE_MAP.get(namespace, namespace)
     
-    def build_vector_database(self) -> int:
+    def store_vectors(self, save: bool = True) -> int:
         """
         Build the vector database with class and property information.
         
         Args:
-            include_properties: Whether to include properties in addition to classes
+            save: Whether to save the vectors to disk
             
         Returns:
             Number of items added to the database
         """
-        if not self.collection or not self.embedding_model:
-            logger.error("Vector database or embedding model not initialized")
-            return 0
-        
         # Extract classes and properties
         classes = self.extract_classes_with_sparql()
         items = classes.copy()
 
         if not items:
-            logger.warning("No classes or properties found to add to vector database")
+            print("No classes or properties found to add to vector database")
             return 0
         
         # Prepare data for vector database
         documents = []
         metadatas = []
         ids = []
-        all_ids = self.collection.get()['ids']
+        
         for i, item in enumerate(items):
             # Create searchable text combining label, local name, and comment
             id = item['uri']
-            if id in all_ids:
-                # logger.info(f"Skipping {id} as it already exists in vector database")
-                continue
             if id in ids:
-                # logger.info(f"Skipping duplicate id {id}")
                 continue
-            # searchable_text = f"{item['local_name']}"
+                
             searchable_text = f"{item['local_name']}: {item['label']}"
             print(searchable_text)
             documents.append(searchable_text)
+            
+            # Some redundancy in documents and metadatas, just so I don't have to merge data later. 
             metadatas.append({
                 'uri': item['uri'],
                 'label': item['label'],
-                # 'comment': item['comment'],
-                # 'type': item['type'],
                 'local_name': item['local_name'],
                 'namespace': item['namespace']
             })
-            # ids.append(f"{item['type']}_{i}")
             ids.append(item['uri'])
-        
-        if ids:
-            logger.info(f"Adding {len(items)} items to vector database")       
-            # Add to vector database
-            self.collection.add(
-                documents=documents,
-                metadatas=metadatas,
-                ids=ids
-            )
             
-            return len(items)
-    def find_similar_uris(self, query: str, n_results: int = 5, print_results = True) -> List[Dict]:
-        """
-        Find URIs similar to the given query string.
-        
-        Args:
-            query: Search query string
-            n_results: Number of results to return
+        self.metadatas = metadatas
+        self.documents = documents
+        self.embeddings = self.embedding_model.encode(documents)
+
+        if save:
+            metadata_path = self.config.data_dir / 'document_metadata.pickle'
+            embeddings_path = self.config.data_dir / 'embeddings.pickle'
             
-        Returns:
-            List of dictionaries containing similar URIs and metadata
-        """
-        if not self.collection:
-            logger.error("Vector database not initialized")
-            return []
-        
-        try:
-            results = self.collection.query(
-                query_texts=[query],
-                n_results=n_results
-            )
-            
-            similar_uris = []
-            if results['metadatas'] and results['distances']:
-                for metadata, distance in zip(results['metadatas'][0], results['distances'][0]):
-                    result = metadata.copy()
-                    result['similarity_score'] = 1 - distance  # Convert distance to similarity
-                    similar_uris.append(result)
-                    if print_results:
-                        print(f"  {result['local_name']} ({result['uri']}) - Score: {result['similarity_score']:.3f}")
-            
-            return similar_uris
-            
-        except Exception as e:
-            logger.error(f"Failed to find similar URIs: {e}")
-            return []
-    
+            with open(metadata_path, 'wb') as f:
+                pickle.dump(self.metadatas, f)
+            with open(embeddings_path, 'wb') as f:
+                pickle.dump(self.embeddings, f)
+
+        return len(items)
+
+
+@dataclass
+class URIFinderConfig:
+    """Configuration for URIFinder"""
+    data_dir: Path = Path("data")
+    embedding_model: str = DEFAULT_EMBEDDING_MODEL
+
+
 class URIFinder:
-    def __init__(self, vector_db_path: str, 
-                 embedding_model: str):
-        self.vector_db_path = vector_db_path
+    def __init__(self, config: URIFinderConfig):
+        self.config = config
         self.client = None
         self.collection = None
-        self.embedding_model = None
-        self.embedding_model_name = embedding_model
+        self.embedding_model = SentenceTransformer(self.config.embedding_model)
         
-        self._initialize_vector_db()
-        self._initialize_embedding_model()
+        self._init_store()
         
-    def _initialize_vector_db(self):
-        """Initialize ChromaDB client and collection."""
-        self.client = chromadb.PersistentClient(path=self.vector_db_path)
-        self.collection = self.client.get_or_create_collection(
-                name="ontology_classes",
-                metadata={"description": "Ontology class names and URIs",
-                          "hnsw:space": "cosine"} 
+    def _init_store(self):
+        """Initialize the store by loading saved data."""
+        metadata_path = self.config.data_dir / 'document_metadata.pickle'
+        embeddings_path = self.config.data_dir / 'embeddings.pickle'
+        
+        if not metadata_path.exists() or not embeddings_path.exists():
+            raise FileNotFoundError(
+                f"Required data files not found in {self.config.data_dir}. "
+                "Please run URIEncoder.store_vectors() first."
             )
-    def _initialize_embedding_model(self):
-        """Initialize the sentence transformer model."""
-        self.embedding_model = embedding_functions.SentenceTransformerEmbeddingFunction(
-            self.embedding_model_name
-        )
+        
+        with open(metadata_path, 'rb') as f:
+            self.metadatas = pickle.load(f)
+        with open(embeddings_path, 'rb') as f:
+            self.embeddings = pickle.load(f)
     
     def _resolve_namespace_filter(self, namespace_input: str) -> str:
         """Resolve namespace input to full namespace URI."""
@@ -352,11 +294,17 @@ class URIFinder:
         # If it's already a full namespace, return as is
         return namespace_input
     
+    def filter_embeddings_ns(self, desired_namespace: str):
+        matching_indices = [i for i, d in enumerate(self.metadatas) if d['namespace'] == desired_namespace]
+        if len(matching_indices) == 0:
+            raise Exception(f'No documents in this namespace {desired_namespace}')
+        return self.embeddings[matching_indices], matching_indices
+    
     def _get_namespace_abbrev(self, namespace: str) -> str:
         """Get namespace abbreviation from full namespace URI."""
         return NAMESPACE_MAP.get(namespace, namespace)
 
-    def find_similar_uris(self, query: str,namespace: str = None, n_results: int = 5, print_results = False) -> List[Dict]:
+    def find_similar_uris(self, query: str, namespace: str = None, n_results: int = 5) -> List[Dict]:
         """
         Find URIs similar to the given query string.
         
@@ -368,38 +316,62 @@ class URIFinder:
         Returns:
             List of dictionaries containing similar URIs and metadata
         """
-        if not self.collection:
-            logger.error("Vector database not initialized")
-            return []
         
         try:
             if namespace:
                 # Resolve namespace abbreviation to full URI
+                if namespace not in ABBREV_TO_NAMESPACE.keys():
+                    raise ValueError(f"Namespace not known: {namespace}")
                 resolved_namespace = self._resolve_namespace_filter(namespace)
-                results = self.collection.query(
-                    query_texts=[query],
-                    n_results=n_results,
-                    where={"namespace": str(resolved_namespace)}
-                )
+                embeddings, filtered_indices = self.filter_embeddings_ns(str(resolved_namespace)) 
             else:
-                results = self.collection.query(
-                    query_texts=[query],
-                    n_results=n_results
-                )
-            
-            similar_uris = []
-            if results['metadatas'] and results['distances']:
-                for metadata, distance in zip(results['metadatas'][0], results['distances'][0]):
-                    result = metadata.copy()
-                    result['similarity_score'] = 1 - distance  # Convert distance to similarity
-                    # Add namespace abbreviation for display
-                    result['namespace_abbrev'] = self._get_namespace_abbrev(result['namespace'])
-                    similar_uris.append(result)
-                    if print_results:
-                        print(f"  {result['local_name']} ({result['uri']}) - Score: {result['similarity_score']:.3f}")
-                    
-            return similar_uris
+                embeddings = self.embeddings
+                filtered_indices = None
+
+            similarities = self.embedding_model.similarity(embeddings, self.embedding_model.encode(query)).squeeze(1)
+            topk_indices = similarities.topk(n_results).indices
+            if filtered_indices:
+                indices = [filtered_indices[i] for i in topk_indices.tolist()]
+            else:
+                indices = topk_indices.tolist()
+            metadata_matches = [self.metadatas[i] for i in indices]
+            return metadata_matches
             
         except Exception as e:
-            logger.error(f"Failed to find similar URIs: {e}")
+            print(f"Failed to find similar URIs: {e}")
             return []
+
+
+# Example usage
+def create_encoder_from_env() -> URIEncoder:
+    """Create URIEncoder using environment variables for configuration."""
+    ttl_dirs_str = os.getenv("TTL_DIRECTORIES", "")
+    if not ttl_dirs_str:
+        raise ValueError("TTL_DIRECTORIES environment variable not set")
+    
+    ttl_directories = [Path(d.strip()) for d in ttl_dirs_str.split(",")]
+    
+    config = URIEncoderConfig(
+        ttl_directories=ttl_directories,
+        data_dir=Path(os.getenv("DATA_DIR", "data")),
+        embedding_model=os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
+    )
+    
+    return URIEncoder(config)
+
+
+def create_finder_from_env() -> URIFinder:
+    """Create URIFinder using environment variables for configuration."""
+    config = URIFinderConfig(
+        data_dir=Path(os.getenv("DATA_DIR", "data")),
+        embedding_model=os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
+    )
+    
+    return URIFinder(config)
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
+    e = create_encoder_from_env()
+    e.load_ttl_files()
+    e.store_vectors()

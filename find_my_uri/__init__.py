@@ -9,6 +9,6 @@ from .core import URIEncoder, URIFinder
 
 __version__ = "0.1.0"
 __author__ = "lazlop"
-__email__ = "your-email@example.com"
+__email__ = "lpaul@lbl.gov"
 
 __all__ = ["URIEncoder", "URIFinder"]
