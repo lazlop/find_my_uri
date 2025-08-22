@@ -6,7 +6,7 @@ If you can't remember if the QUDT unit for Fahrenheit is DEG_F, TemperatureFahre
 
 ## Overview
 
-Find My URI loads class definitions from TTL (Turtle) ontology files, extracts class information using SPARQL queries, and stores them in a ChromaDB vector database for efficient semantic search. Users can then search for URIs using natural language terms and get ranked results based on semantic similarity.
+Find My URI loads class definitions from TTL (Turtle) ontology files, extracts class information using SPARQL queries, and stores the embeddings. Users can then search for URIs using natural language terms and get ranked results based on semantic similarity.
 
 ## Features
 
