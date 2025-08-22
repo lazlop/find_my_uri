@@ -9,6 +9,7 @@ from importlib.resources import files
 DATA_FILES = files("find_my_uri").joinpath("data")
 
 DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2"
+
 from .core import URIFinder, URIFinderConfig
 import importlib.resources
 import argparse
@@ -17,8 +18,6 @@ from pathlib import Path
 from typing import List, Optional
 import sys
 import readline
-
-DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2"
 
 class CommandHistory:
     """Command history manager with readline integration."""
@@ -154,7 +153,7 @@ def main():
     try:
         # Try to use the data directory approach first
         config = URIFinderConfig(
-            data_dir=Path("data"),
+            data_dir=DATA_FILES,
             embedding_model=DEFAULT_EMBEDDING_MODEL
         )
         finder = URIFinder(config)
@@ -285,7 +284,6 @@ def _show_help():
     print("\nNavigation:")
     print("  ↑ / ↓                - Navigate command history")
     print("  Tab                  - Auto-complete commands and options")
-    print("  Ctrl+R               - Search command history")
     
     print("\nSearch Options:")
     print("  -n, --num-results <num>  - Number of results to return (default: 3)")
