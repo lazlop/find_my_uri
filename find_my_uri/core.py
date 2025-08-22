@@ -166,12 +166,16 @@ class URIEncoder:
                 label = str(row.label) if row.label else self._extract_local_name(class_uri)
                 comment = str(row.comment) if row.comment else ""
 
+                # These should be the 'interesting' parents, other than class, concept, etc.
+                parents = [self._extract_local_name(uri) for uri in self.graph.objects(row.klass, RDFS['subClassOf']*'+')][:-2]
+
                 class_info = {
                     'uri': class_uri,
                     'label': label,
                     'local_name': self._extract_local_name(class_uri),
                     'comment':comment,
-                    'namespace': self._extract_namespace(class_uri)
+                    'namespace': self._extract_namespace(class_uri),
+                    'parents': ', '.join(parents)
                 }
                 classes.append(class_info)
                 
@@ -232,7 +236,7 @@ class URIEncoder:
             if id in ids:
                 continue
                 
-            searchable_text = f"{item['local_name']}: {item['label']}"
+            searchable_text = f"{item['local_name']}: {item['label']}, {item['parents']}, {item['comment']}"
             print(searchable_text)
             documents.append(searchable_text)
             

@@ -334,6 +334,7 @@ def _display_results(results):
                 label = result.get('label', '')
                 comment = result.get('comment', None)
                 namespace = result.get('namespace', '')
+                parents = result.get('parents', None)
                 
                 # Try to get namespace abbreviation
                 from .core import NAMESPACE_MAP
@@ -351,6 +352,8 @@ def _display_results(results):
                     print(f"    Label: {label}")
                 if comment:
                     print(f"    Comment: {comment}")
+                if parents:
+                    print(f"    Parents: {parents}")
                 
                 # If similarity score is available
                 if 'similarity_score' in result:
