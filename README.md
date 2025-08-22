@@ -15,7 +15,7 @@ Find My URI loads class definitions from TTL (Turtle) ontology files, extracts c
 - **Multiple ontology support**: Supports ASHRAE Standard 223, water ontology, QUDT units, and more
 - **Interactive CLI**: Command-line interface for easy searching
 - **Namespace filtering**: Filter results by specific ontology namespaces
-- **Persistent storage**: Uses ChromaDB for efficient vector storage and retrieval
+- **Persistent storage**: Stores commonly used ontologies for easy retrieval
 
 ## Supported Ontologies
 
