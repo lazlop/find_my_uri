@@ -9,54 +9,94 @@ from importlib.resources import files
 DATA_FILES = files("find_my_uri").joinpath("data")
 
 DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2"
+from .core import URIFinder, URIFinderConfig
+import importlib.resources
+import argparse
+import shlex
+from pathlib import Path
+from typing import List, Optional
+import sys
+import readline
+
+DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2"
 
 class CommandHistory:
-    """Simple command history manager."""
+    """Command history manager with readline integration."""
     
     def __init__(self, max_size: int = 100):
-        self.history: List[str] = []
         self.max_size = max_size
-        self.current_index = -1
+        self.setup_readline()
+    
+    def setup_readline(self):
+        """Setup readline for command history and completion."""
+        
+        # Enable history
+        readline.set_history_length(self.max_size)
+        
+        # Set up key bindings for better experience
+        readline.parse_and_bind('tab: complete')
+        
+        # Enable history search
+        readline.parse_and_bind('"\e[A": history-search-backward')  # Up arrow
+        readline.parse_and_bind('"\e[B": history-search-forward')   # Down arrow
+        
+        # Set up completion for common commands
+        readline.set_completer(self._completer)
+        readline.set_completer_delims(' \t\n')
+    
+    def _completer(self, text, state):
+        """Auto-completion function for commands and options."""
+        commands = [
+            'help', 'quit', 'exit', 'history', 
+            '-n', '--num-results', '-ns', '--namespace', '-h', '--help'
+        ]
+        
+        namespaces = ['S223', 'WATR', 'UNIT', 'QK', 'RDF', 'RDFS', 'OWL']
+        
+        # Combine all possible completions
+        options = commands + namespaces
+        
+        matches = [cmd for cmd in options if cmd.startswith(text)]
+        
+        if state < len(matches):
+            return matches[state]
+        return None
     
     def add(self, command: str):
-        """Add a command to history."""
-        if command and (not self.history or self.history[-1] != command):
-            self.history.append(command)
-            if len(self.history) > self.max_size:
-                self.history.pop(0)
-        self.reset_index()
+        """Add a command to readline history."""
+        readline.add_history(command)
     
-    def get_previous(self) -> Optional[str]:
-        """Get the previous command in history."""
-        if not self.history:
-            return None
+    def get_history(self, n: int = 10) -> List[str]:
+        """Get last n commands from history."""
         
-        if self.current_index == -1:
-            self.current_index = len(self.history) - 1
-        elif self.current_index > 0:
-            self.current_index -= 1
+        history_length = readline.get_current_history_length()
+        start = max(1, history_length - n + 1)
         
-        return self.history[self.current_index] if self.current_index >= 0 else None
+        return [
+            readline.get_history_item(i) 
+            for i in range(start, history_length + 1)
+            if readline.get_history_item(i)
+        ]
     
-    def get_next(self) -> Optional[str]:
-        """Get the next command in history."""
-        if not self.history or self.current_index == -1:
-            return None
-        
-        if self.current_index < len(self.history) - 1:
-            self.current_index += 1
-            return self.history[self.current_index]
-        else:
-            self.reset_index()
-            return ""
+    def clear_history(self):
+        """Clear command history."""
+        readline.clear_history()
     
-    def reset_index(self):
-        """Reset the history index."""
-        self.current_index = -1
+    def save_history(self, filename: str):
+        """Save history to file."""
+        try:
+            readline.write_history_file(filename)
+        except Exception as e:
+            print(f"Warning: Could not save history to {filename}: {e}")
     
-    def show_history(self, n: int = 10) -> List[str]:
-        """Show last n commands from history."""
-        return self.history[-n:] if self.history else []
+    def load_history(self, filename: str):
+        """Load history from file."""
+        try:
+            readline.read_history_file(filename)
+        except FileNotFoundError:
+            pass  # No history file exists yet
+        except Exception as e:
+            print(f"Warning: Could not load history from {filename}: {e}")
 
 
 class SearchArgumentParser:
@@ -108,20 +148,49 @@ def main():
     """Interactive command line utility for searching URIs."""
     print("=== URI Search Utility ===")
     print("This utility searches for URIs in the ontology using semantic similarity.")
-    print("Type 'help' for commands, 'up' for previous command, or 'quit' to exit.\n")
-    
-    config = URIFinderConfig(
-        data_dir=DATA_FILES,
-        embedding_model=DEFAULT_EMBEDDING_MODEL
-    )
-    finder = URIFinder(config)
-    print("✓ Vector database loaded successfully")
+    print("Type 'help' for commands or 'quit' to exit.\n")
+
+    # Initialize finder
+    try:
+        # Try to use the data directory approach first
+        config = URIFinderConfig(
+            data_dir=Path("data"),
+            embedding_model=DEFAULT_EMBEDDING_MODEL
+        )
+        finder = URIFinder(config)
+        print("✓ Vector database loaded successfully")
+    except FileNotFoundError:
+        # Fallback to importlib.resources approach
+        try:
+            with importlib.resources.path('find_my_uri', 'vector_db') as vector_db_path:
+                config = URIFinderConfig(
+                    data_dir=vector_db_path,
+                    embedding_model=DEFAULT_EMBEDDING_MODEL
+                )
+                finder = URIFinder(config)
+                print("✓ Vector database loaded successfully")
+        except Exception as e:
+            print(f"Error loading vector database: {e}")
+            return
     
     # Initialize command history and parser
     history = CommandHistory()
     search_parser = SearchArgumentParser()
     
-    _run_interactive_loop(finder, history, search_parser)
+    # Load command history from file
+    history_file = Path.home() / '.uri_search_history'
+    history.load_history(str(history_file))
+    
+    try:
+        _run_interactive_loop(finder, history, search_parser)
+    finally:
+        # Save command history on exit
+        history.save_history(str(history_file))
+
+
+def _get_input_with_readline(prompt: str) -> str:
+    """Get input with readline support if available."""
+    return input(prompt)
 
 
 def _run_interactive_loop(finder, history: CommandHistory, search_parser: SearchArgumentParser):
@@ -129,8 +198,8 @@ def _run_interactive_loop(finder, history: CommandHistory, search_parser: Search
     
     while True:
         try:
-            # Get user input
-            user_input = input("\n> ").strip()
+            # Get user input with readline support
+            user_input = _get_input_with_readline("\n> ").strip()
             
             if not user_input:
                 continue
@@ -140,37 +209,6 @@ def _run_interactive_loop(finder, history: CommandHistory, search_parser: Search
                 print("Goodbye!")
                 break
             
-            elif user_input.lower() == 'up':
-                previous_cmd = history.get_previous()
-                if previous_cmd:
-                    print(f"Previous command: {previous_cmd}")
-                    # Ask if user wants to execute it
-                    confirm = input("Execute this command? (y/n): ").strip().lower()
-                    if confirm in ['y', 'yes']:
-                        user_input = previous_cmd
-                    else:
-                        continue
-                else:
-                    print("No previous commands in history")
-                    continue
-            
-            elif user_input.lower() == 'down':
-                next_cmd = history.get_next()
-                if next_cmd is not None:
-                    if next_cmd:
-                        print(f"Next command: {next_cmd}")
-                        confirm = input("Execute this command? (y/n): ").strip().lower()
-                        if confirm in ['y', 'yes']:
-                            user_input = next_cmd
-                        else:
-                            continue
-                    else:
-                        print("End of history")
-                        continue
-                else:
-                    print("No next commands in history")
-                    continue
-            
             elif user_input.lower() in ['help', 'h']:
                 _show_help()
                 continue
@@ -178,7 +216,7 @@ def _run_interactive_loop(finder, history: CommandHistory, search_parser: Search
             elif user_input.lower().startswith('history'):
                 parts = user_input.split()
                 n = 10 if len(parts) == 1 else int(parts[1]) if parts[1].isdigit() else 10
-                recent_history = history.show_history(n)
+                recent_history = history.get_history(n)
                 if recent_history:
                     print(f"\nLast {len(recent_history)} commands:")
                     for i, cmd in enumerate(recent_history, 1):
@@ -187,9 +225,13 @@ def _run_interactive_loop(finder, history: CommandHistory, search_parser: Search
                     print("No commands in history")
                 continue
             
-            # Add to history (before processing in case of error)
-            if user_input.lower() not in ['up', 'down']:
-                history.add(user_input)
+            elif user_input.lower() == 'clear-history':
+                history.clear_history()
+                print("Command history cleared")
+                continue
+            
+            # Add to history
+            history.add(user_input)
             
             # Parse and execute search command
             try:
@@ -223,6 +265,9 @@ def _run_interactive_loop(finder, history: CommandHistory, search_parser: Search
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
             break
+        except EOFError:
+            print("\nGoodbye!")
+            break
         except Exception as e:
             print(f"Error: {e}")
             print("Type 'help' for usage information.")
@@ -231,12 +276,17 @@ def _run_interactive_loop(finder, history: CommandHistory, search_parser: Search
 def _show_help():
     """Show general help information."""
     print("\nCommands:")
-    print("  help, h                - Show this help message")
-    print("  quit/exit/q           - Exit the utility")
-    print("  up                    - Show and optionally execute previous command")
-    print("  down                  - Show and optionally execute next command in history")
-    print("  history [n]           - Show last n commands (default: 10)")
+    print("  help, h               - Show this help message")
+    print("  quit/exit/q          - Exit the utility")
+    print("  history [n]          - Show last n commands (default: 10)")
+    print("  clear-history        - Clear command history")
     print("  <search_term> [options] - Search for URIs")
+    
+    print("\nNavigation:")
+    print("  ↑ / ↓                - Navigate command history")
+    print("  Tab                  - Auto-complete commands and options")
+    print("  Ctrl+R               - Search command history")
+    
     print("\nSearch Options:")
     print("  -n, --num-results <num>  - Number of results to return (default: 3)")
     print("  -ns, --namespace <ns>    - Filter by namespace abbreviation")
