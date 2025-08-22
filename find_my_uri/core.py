@@ -7,8 +7,11 @@ from typing import List, Dict, Tuple, Optional, Union
 from rdflib import Graph, Namespace, URIRef, Literal
 from dataclasses import dataclass
 from pprint import pprint
+from importlib.resources import files
+DATA_FILES = files("find_my_uri").joinpath("data")
 
 DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2" # or 'all-MiniLM-L6-v2'
+# DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 """
 SPARQL-based URI finder using vector database for class name matching.
@@ -130,6 +133,7 @@ class URIEncoder:
         SELECT DISTINCT 
         ?klass 
         ?label 
+        ?comment 
         WHERE {
             { ?klass a s223:Class ;
                 rdfs:label ?label } 
@@ -148,6 +152,7 @@ class URIEncoder:
             BIND("rdfs:Class" as ?type)
             
             OPTIONAL { ?klass rdfs:label ?label }
+            OPTIONAL { ?klass rdfs:comment ?comment }
         }
         ORDER BY ?klass
         """
@@ -159,11 +164,13 @@ class URIEncoder:
             for row in results:
                 class_uri = str(row.klass)
                 label = str(row.label) if row.label else self._extract_local_name(class_uri)
-                
+                comment = str(row.comment) if row.comment else ""
+
                 class_info = {
                     'uri': class_uri,
                     'label': label,
                     'local_name': self._extract_local_name(class_uri),
+                    'comment':comment,
                     'namespace': self._extract_namespace(class_uri)
                 }
                 classes.append(class_info)
@@ -230,12 +237,7 @@ class URIEncoder:
             documents.append(searchable_text)
             
             # Some redundancy in documents and metadatas, just so I don't have to merge data later. 
-            metadatas.append({
-                'uri': item['uri'],
-                'label': item['label'],
-                'local_name': item['local_name'],
-                'namespace': item['namespace']
-            })
+            metadatas.append(item)
             ids.append(item['uri'])
             
         self.metadatas = metadatas
@@ -353,7 +355,7 @@ def create_encoder_from_env() -> URIEncoder:
     
     config = URIEncoderConfig(
         ttl_directories=ttl_directories,
-        data_dir=Path(os.getenv("DATA_DIR", "data")),
+        data_dir=DATA_FILES,
         embedding_model=os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
     )
     
@@ -363,7 +365,7 @@ def create_encoder_from_env() -> URIEncoder:
 def create_finder_from_env() -> URIFinder:
     """Create URIFinder using environment variables for configuration."""
     config = URIFinderConfig(
-        data_dir=Path(os.getenv("DATA_DIR", "data")),
+        data_dir=DATA_FILES,
         embedding_model=os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
     )
     

@@ -1,14 +1,9 @@
-from .core import URIFinder, URIFinderConfig
+from .core import URIFinder, URIFinderConfig, DATA_FILES, DEFAULT_EMBEDDING_MODEL
 import importlib.resources
 import argparse
 import shlex
 from pathlib import Path
 from typing import List, Optional
-from importlib.resources import files
-
-DATA_FILES = files("find_my_uri").joinpath("data")
-
-DEFAULT_EMBEDDING_MODEL = "paraphrase-MiniLM-L3-v2"
 
 from .core import URIFinder, URIFinderConfig
 import importlib.resources
@@ -337,6 +332,7 @@ def _display_results(results):
                 local_name = result.get('local_name', 'Unknown')
                 uri = result.get('uri', 'Unknown')
                 label = result.get('label', '')
+                comment = result.get('comment', None)
                 namespace = result.get('namespace', '')
                 
                 # Try to get namespace abbreviation
@@ -349,10 +345,12 @@ def _display_results(results):
                 namespace_display = namespace_abbrev or namespace
                 
                 print(f"{i:2d}. {local_name}")
-                print(f"    URI: {uri}")
+                # print(f"    URI: {uri}")
                 print(f"    Namespace: {namespace_display}")
                 if label and label != local_name:
                     print(f"    Label: {label}")
+                if comment:
+                    print(f"    Comment: {comment}")
                 
                 # If similarity score is available
                 if 'similarity_score' in result:

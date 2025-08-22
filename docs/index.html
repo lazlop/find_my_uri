@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find My URI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Find My URI</h1>
+        <p>If you almost know your URI, but don't remember it exactly, this will help find it using semantic search. Powered by <a href="https://github.com/xenova/transformers.js">Transformers.js</a>.</p>
+        
+        <div class="input-group">
+            <input type="text" id="query" placeholder="Please enter a search term (e.g. air handling unit, temperature, ...)">
+            <select id="namespace">
+                <option value="">All Namespaces</option>
+                <option value="S223">S223</option>
+                <option value="WATR">WATR</option>
+                <option value="UNIT">UNIT</option>
+                <option value="QK">QK</option>
+            </select>
+            <input type="number" id="n_results" value="5" min="1" max="20">
+            <button id="search">Search</button>
+        </div>
+
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    
+    <script type="module" src="main.js"></script>
+</body>
+</html>
