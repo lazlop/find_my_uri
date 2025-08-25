@@ -10,7 +10,7 @@ Find My URI loads class definitions from TTL (Turtle) ontology files, extracts c
 
 ## Use Online 
 
-Find My URI is deployed via github pages for easy usage. Try at [https://lazlop.github.io/find_my_uri/](url)
+Find My URI is deployed via github pages for easy usage. Try at [https://lazlop.github.io/find_my_uri/](https://lazlop.github.io/find_my_uri/)
 
 You can also use it via CLI through uvx or a good old fashioned pip install
 
